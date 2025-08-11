@@ -2,35 +2,43 @@
 
 import streamlit as st
 import pickle
-from sklearn.metrics.pairwise import cosine_similarity
+import pandas as pd
 
-# Load model
+# Load the trained model
 with open("ieee_recommender.pkl", "rb") as f:
     model_data = pickle.load(f)
 
-tfidf = model_data["tfidf"]
-tfidf_matrix = model_data["tfidf_matrix"]
-papers = model_data["papers"]
+# You might need to adjust depending on how you saved it
+# Example: if you saved a dict with 'model' and 'data'
+model = model_data["model"]
+data = model_data["data"]
+
+# Domain list
+domains = [
+    "Machine Learning",
+    "Signal Processing",
+    "Renewable Energy",
+    "Embedded Systems",
+    "Internet of Things",
+    "Computer Vision"
+]
 
 # Streamlit UI
-st.title("📚 IEEE Technical Resource Recommender")
-st.write("Get recommended IEEE papers, conferences, and resources based on your topic.")
+st.title("IEEE Project Recommender")
 
-# Input from user
-query = st.text_input("Enter your research topic:")
+# Multiselect for domain choice
+selected_domains = st.multiselect("Select Domains", domains)
 
-if st.button("Recommend"):
-    if query:
-        query_vec = tfidf.transform([query])
-        similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
-        top_indices = similarities.argsort()[-5:][::-1]
+if selected_domains:
+    st.write(f"Searching for projects in: {', '.join(selected_domains)}")
+    
+    # Simple filter — adjust if your data format is different
+    filtered = data[data['domain'].isin(selected_domains)]
+    
+    # Show top 30 suggestions
+    top_suggestions = filtered.head(30)  # Or sorted logic if needed
+    st.write("### Top 30 Recommendations")
+    st.dataframe(top_suggestions)
 
-        st.subheader("Top Recommendations:")
-        for idx in top_indices:
-            st.markdown(f"**{papers.iloc[idx]['title']}**")
-            st.write(papers.iloc[idx]['abstract'])
-            if 'url' in papers.columns:
-                st.markdown(f"[Read More]({papers.iloc[idx]['url']})")
-            st.write("---")
-    else:
-        st.warning("Please enter a topic.")
+else:
+    st.info("Please select at least one domain to see recommendations.")
