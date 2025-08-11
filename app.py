@@ -13,27 +13,30 @@ tfidf_matrix = model_data["tfidf_matrix"]
 papers = model_data["papers"]
 
 # Domain list
-domains = [
-    "Machine Learning",
-    "Signal Processing",
-    "Renewable Energy",
-    "Embedded Systems",
-    "Internet of Things",
-    "Computer Vision"
-]
+domain_keywords = {
+    "Machine Learning": ["machine learning", "deep learning", "ml", "neural network"],
+    "Signal Processing": ["signal processing", "image processing", "speech processing"],
+    "Renewable Energy": ["renewable", "solar", "wind", "green energy"],
+    "Embedded Systems": ["embedded", "microcontroller", "arduino", "raspberry pi"],
+    "Internet of Things": ["internet of things", "iot", "sensor network"],
+    "Computer Vision": ["computer vision", "image recognition", "object detection"]
+}
 
 st.title("IEEE Project Recommender")
 
 # Multiselect for domain choice
-selected_domains = st.multiselect("Select Domains", domains)
+selected_domains = st.multiselect("Select Domains", domain_keywords)
 
 if selected_domains:
-    st.write(f"Searching for projects in: {', '.join(selected_domains)}")
-
-    # Filter papers based on keyword search in abstract or title
-    mask = papers['abstract'].str.contains('|'.join(selected_domains), case=False, na=False) | \
-           papers['title'].str.contains('|'.join(selected_domains), case=False, na=False)
-
+    all_keywords = []
+    for d in selected_domains:
+        all_keywords.extend(domain_keywords[d])
+    
+    mask = (
+        papers['abstract'].str.contains('|'.join(all_keywords), case=False, na=False) |
+        papers['title'].str.contains('|'.join(all_keywords), case=False, na=False)
+    )
+    
     filtered = papers[mask]
 
     if filtered.empty:
@@ -44,4 +47,5 @@ if selected_domains:
 
 else:
     st.info("Please select at least one domain to see recommendations.")
+
 
